@@ -1,10 +1,9 @@
 name: ZAP DAST Scan
 
 on:
-  workflow_run:
-    workflows: ["SAST Scan"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 jobs:
   zap-dast:
