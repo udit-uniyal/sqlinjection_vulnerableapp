@@ -37,7 +37,6 @@ jobs:
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://localhost:5000 \
             -J output/zap_report.json \
-            -w 
 
       - name: Sending Json to AccuKnox Console
         run: |
