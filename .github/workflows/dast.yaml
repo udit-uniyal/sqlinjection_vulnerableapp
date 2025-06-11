@@ -1,0 +1,53 @@
+name: ZAP DAST Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  zap-dast:
+    runs-on: ubuntu-latest
+
+    services:
+      webapp:
+        image: python:3.9
+        ports:
+          - 5000:5000
+        options: >-
+          --health-cmd "curl --fail http://localhost:5000 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - ./:/app
+        command: >
+          bash -c "pip install -r requirements.txt && python3 app.py"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Wait for app to be ready
+        run: sleep 30
+
+      - name: Run ZAP scan
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk \
+            -t owasp/zap2docker-stable zap-full-scan.py \
+            -t http://host.docker.internal:5000 \
+            -J zap_report.json \
+            -r zap_report.html
+
+      - name: Upload ZAP HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-html-report
+          path: zap_report.html
+
+      - name: Upload ZAP JSON report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-json-report
+          path: zap_report.json
+
