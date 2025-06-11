@@ -1,9 +1,10 @@
 name: ZAP DAST Scan
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["SAST Scan"]
+    types:
+      - completed
 
 jobs:
   zap-dast:
@@ -44,3 +45,12 @@ jobs:
           --header "Tenant-Id: ${{ secrets.AK_TENANT_ID }}" \
           --header "Authorization: Bearer ${{ secrets.AK_TOKEN }}" \
           --form "file=@zap-output/zap_report.json"
+      
+      - name: Check severity level and exit if high severity issues found
+        run: |
+          if grep -q '"riskCode":"High"' zap-output/zap_report.json; then
+            echo "High severity issues found in ZAP scan. Failing the job."
+            exit 1
+          else
+            echo "No high severity issues found."
+          fi
