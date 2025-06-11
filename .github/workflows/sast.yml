@@ -65,9 +65,20 @@ jobs:
       
       - name: Check severity level and exit if high severity issues found
         run: |
-          if grep -q '"riskCode":"High"' zap-output/zap_report.json; then
-            echo "High severity issues found in ZAP scan. Failing the job."
-            exit 1
-          else
-            echo "No high severity issues found."
-          fi
+         # Map severity threshold to risk code (0=Informational, 1=Low, 2=Medium, 3=High)
+         case "High" in
+           High)           RISK_CODE=3 ;;
+           Medium)         RISK_CODE=2 ;;
+           Low)            RISK_CODE=1 ;;
+           Informational)  RISK_CODE=0 ;;
+           *)              echo "Invalid severity threshold"; exit 1 ;;
+         esac
+
+         # Check if any alerts in the report meet or exceed the threshold risk code
+         if jq -e --argjson risk_code "$RISK_CODE" \
+              '.site[].alerts[] | select(.riskcode|tonumber >= $risk_code)' /tmp/zap/report.json > /dev/null; then
+           echo "Error: Vulnerability with severity High or higher found in ZAP report."
+           exit 1
+         else
+           echo "No vulnerabilities with severity High or higher were found."
+         fi
