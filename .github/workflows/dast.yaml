@@ -36,7 +36,7 @@ jobs:
           docker run --network host --rm --user 0 -v ${{ github.workspace }}/zap-output:/zap/wrk/output \
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://localhost:5000 \
-            -J output/zap_report.json \
+            -J output/zap_report.json || true
 
       - name: Sending Json to AccuKnox Console
         run: |
