@@ -25,14 +25,14 @@ jobs:
       - name: Start the app in background
         run: |
           python3 app.py &
-          echo "Waiting for app to start..."
+          echo "Waiting for the app to start..."
           sleep 10
 
       - name: Run ZAP scan
         run: |
-          docker run --rm -v ${{ github.workspace }}:/zap/wrk \
+          docker run --network host --rm -v ${{ github.workspace }}:/zap/wrk \
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
-            -t http://host.docker.internal:5000 \
+            -t http://localhost:5000 \
             -J zap_report.json \
             -r zap_report.html
 
