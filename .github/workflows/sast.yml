@@ -76,7 +76,7 @@ jobs:
 
          # Check if any alerts in the report meet or exceed the threshold risk code
          if jq -e --argjson risk_code "$RISK_CODE" \
-              '.site[].alerts[] | select(.riskcode|tonumber >= $risk_code)' /tmp/zap/report.json > /dev/null; then
+              '.site[].alerts[] | select(.riskcode|tonumber >= $risk_code)' output/zap_report.json > /dev/null; then
            echo "Error: Vulnerability with severity High or higher found in ZAP report."
            exit 1
          else
