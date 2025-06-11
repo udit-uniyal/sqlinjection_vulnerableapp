@@ -33,7 +33,7 @@ jobs:
       
       - name: Run ZAP scan
         run: |
-          docker run --network host --rm -v ${{ github.workspace }}/zap-output:/zap/wrk/output \
+          docker run --network host --rm --user 0 -v ${{ github.workspace }}/zap-output:/zap/wrk/output \
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://localhost:5000 \
             -J output/zap_report.json 
