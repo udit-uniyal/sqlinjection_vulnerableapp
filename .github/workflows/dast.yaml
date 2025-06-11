@@ -31,7 +31,7 @@ jobs:
       - name: Run ZAP scan
         run: |
           docker run --rm -v ${{ github.workspace }}:/zap/wrk \
-            -t owasp/zap2docker-stable zap-full-scan.py \
+            -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://host.docker.internal:5000 \
             -J zap_report.json \
             -r zap_report.html
