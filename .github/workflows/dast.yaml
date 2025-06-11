@@ -36,6 +36,12 @@ jobs:
           docker run --network host --rm --user 0 -v ${{ github.workspace }}/zap-output:/zap/wrk/output \
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://localhost:5000 \
-            -J output/zap_report.json 
+            -J output/zap_report.json \
+            -w 
 
-
+      - name: Sending Json to AccuKnox Console
+        run: |
+          curl --location --request POST "https://cspm.demo.accuknox.com/api/v1/artifact/?tenant_id=${{ secrets.AK_TENANT_ID }}&data_type=ZAP&label_id=DAST&save_to_s3=true" \
+          --header "Tenant-Id: ${{ secrets.AK_TENANT_ID }}" \
+          --header "Authorization: Bearer ${{ inputs.AK_TOKEN }}" \
+          --form "file=@output/zap_report.json
