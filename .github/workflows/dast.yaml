@@ -36,15 +36,4 @@ jobs:
             -J zap_report.json \
             -r zap_report.html
 
-      - name: Upload ZAP HTML report
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-html-report
-          path: zap_report.html
-
-      - name: Upload ZAP JSON report
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-json-report
-          path: zap_report.json
 
