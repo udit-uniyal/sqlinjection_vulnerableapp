@@ -28,12 +28,14 @@ jobs:
           echo "Waiting for the app to start..."
           sleep 10
 
+      - name: Create output folder for ZAP reports
+        run: mkdir zap-output
+      
       - name: Run ZAP scan
         run: |
-          docker run --network host --rm -v ${{ github.workspace }}:/zap/wrk \
+          docker run --network host --rm -v ${{ github.workspace }}/zap-output:/zap/wrk/output \
             -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
             -t http://localhost:5000 \
-            -J zap_report.json \
-            -r zap_report.html
+            -J output/zap_report.json 
 
 
