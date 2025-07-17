@@ -31,8 +31,8 @@ jobs:
         with:
           target_url: "http://localhost:5000"
           accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-          tenant_id: ${{ secrets.TENANT_ID }}
-          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          tenant_id: ${{ secrets.AK_TENANT_ID }}
+          accuknox_token: ${{ secrets.AK_TOKEN }}
           label: "dastdemo"
           severity_threshold: "High"
           scan_type: "baseline"
