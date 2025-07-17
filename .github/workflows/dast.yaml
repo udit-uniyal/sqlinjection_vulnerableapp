@@ -32,7 +32,7 @@ jobs:
     - name: Run AccuKnox DAST Scan
       uses: accuknox/dast-scan-action@v1.0.0
       with:
-        target_url: "http://localhost:5000"
+        target_url: "http://host.docker.internal:5000"
         accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
         tenant_id: ${{ secrets.TENANT_ID }}
         accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
