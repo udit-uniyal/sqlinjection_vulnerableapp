@@ -27,7 +27,7 @@ jobs:
           curl -sSf http://localhost:5000 || (echo "App failed to start" && exit 1)
 
       - name: Run ZAP DAST Scan
-        uses: accuknox/dast-scan-action@v1.0.0
+        uses: ./
         with:
           target_url: "http://localhost:5000"
           accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
