@@ -16,25 +16,28 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
+      - name: Create Docker network
+        run: docker network create zap-net
+
       - name: Build Docker image for vulnerable app
         run: docker build -t vuln-flask-app .
 
-      - name: Run Docker container in background (detached)
+      - name: Run vulnerable app container in background on shared network
         run: |
-          docker run -d -p 5000:5000 --name vuln-flask vuln-flask-app
-          sleep 10  # wait for the app to be ready
+          docker run -d --rm --network zap-net --name vuln-flask -p 5000:5000 vuln-flask-app
+          sleep 10
 
-      - name: Test if app is running
+      - name: Test connectivity from host (debug only)
         run: curl http://localhost:5000
 
+      # ⚠️ Important: Change only this input value
       - name: Run AccuKnox DAST Scan
         uses: accuknox/dast-scan-action@v1.0.0
         with:
-          target_url: "http://localhost:5000"
+          target_url: "http://vuln-flask:5000"  # 👈 Use container name
           accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
           tenant_id: ${{ secrets.TENANT_ID }}
           accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
           label: "dastdemo"
           severity_threshold: "High"
           scan_type: "baseline"
-
