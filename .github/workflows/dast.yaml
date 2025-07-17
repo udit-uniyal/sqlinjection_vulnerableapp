@@ -1,3 +1,10 @@
+name: Build and DAST Scan with ZAP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
 jobs:
   dast_scan:
     runs-on: ubuntu-latest
@@ -33,3 +40,4 @@ jobs:
           label: "dastdemo"
           severity_threshold: "High"
           scan_type: "baseline"
+
