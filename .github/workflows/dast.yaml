@@ -1,43 +1,45 @@
-name: Build and DAST Scan with ZAP
+name: DAST Scan with AccuKnox
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  dast_scan:
+  dast-scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout source code
+      uses: actions/checkout@v3
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Create Docker network
-        run: docker network create zap-net
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
 
-      - name: Build Docker image for vulnerable app
-        run: docker build -t vuln-flask-app .
+    - name: Run vulnerable Flask app in background
+      run: |
+        nohup python app.py > flask.log 2>&1 &
+        sleep 10  # Wait for the app to be ready
+        curl -I http://localhost:5000 || (echo "Flask app not reachable" && exit 1)
 
-      - name: Run Docker container in background on custom network
-        run: |
-          docker run -d --name vuln-flask --network zap-net -p 5000:5000 vuln-flask-app
-          sleep 10  # wait for app to be ready
+    - name: Run AccuKnox DAST Scan
+      uses: accuknox/dast-scan-action@v1.0.0
+      with:
+        target_url: "http://localhost:5000"
+        accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+        tenant_id: ${{ secrets.TENANT_ID }}
+        accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+        label: "dastdemo"
+        severity_threshold: "High"
+        scan_type: "baseline"
 
-      - name: Test if app is running inside network
-        run: docker run --rm --network zap-net curlimages/curl curl http://vuln-flask:5000
-
-      - name: Run AccuKnox DAST Scan
-        uses: accuknox/dast-scan-action@v1.0.0
-        with:
-          target_url: "http://vuln-flask:5000"  # Use container name within same network
-          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-          tenant_id: ${{ secrets.TENANT_ID }}
-          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
-          label: "dastdemo"
-          severity_threshold: "High"
-          scan_type: "baseline"
-
+    - name: Show Flask logs (if needed for debugging)
+      if: always()
+      run: cat flask.log
