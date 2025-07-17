@@ -1,45 +1,51 @@
-name: DAST Scan with AccuKnox
+name: DAST Scan with ZAP and Flask App
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   dast-scan:
     runs-on: ubuntu-latest
 
+    services:
+      vulnapp:
+        image: python:3.9-slim
+        ports:
+          - 5000:5000
+        options: >-
+          --health-cmd="curl --fail http://localhost:5000 || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        volumes:
+          - ${{ github.workspace }}:/app
+        entrypoint: >
+          sh -c "
+            pip install flask &&
+            python /app/app.py
+          "
+
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Wait for app to be healthy
+        run: |
+          for i in {1..10}; do
+            curl -sSf http://localhost:5000 && break
+            echo "Waiting for app..."
+            sleep 5
+          done
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-
-    - name: Run vulnerable Flask app in background
-      run: |
-        nohup python app.py > flask.log 2>&1 &
-        sleep 10  # Wait for the app to be ready
-        curl -I http://localhost:5000 || (echo "Flask app not reachable" && exit 1)
-
-    - name: Run AccuKnox DAST Scan
-      uses: accuknox/dast-scan-action@v1.0.0
-      with:
-        target_url: "http://host.docker.internal:5000"
-        accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-        tenant_id: ${{ secrets.TENANT_ID }}
-        accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
-        label: "dastdemo"
-        severity_threshold: "High"
-        scan_type: "baseline"
-
-    - name: Show Flask logs (if needed for debugging)
-      if: always()
-      run: cat flask.log
+      - name: Run ZAP DAST Scan
+        uses: accuknox/dast-scan-action@v1.0.0
+        with:
+          target_url: "http://vulnapp:5000"
+          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+          tenant_id: ${{ secrets.TENANT_ID }}
+          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          label: "dastdemo"
+          severity_threshold: "High"
+          scan_type: "baseline"
