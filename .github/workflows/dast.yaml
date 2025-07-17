@@ -27,3 +27,14 @@ jobs:
       - name: Test if app is running
         run: curl http://localhost:5000
 
+      - name: Run AccuKnox DAST Scan
+        uses: accuknox/dast-scan-action@v1.0.0
+        with:
+          target_url: "http://localhost:5000"
+          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+          tenant_id: ${{ secrets.TENANT_ID }}
+          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          label: "dastdemo"
+          severity_threshold: "High"
+          scan_type: "baseline"
+
