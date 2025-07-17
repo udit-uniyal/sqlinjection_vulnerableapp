@@ -34,5 +34,5 @@ jobs:
           tenant_id: ${{ secrets.AK_TENANT_ID }}
           accuknox_token: ${{ secrets.AK_TOKEN }}
           label: "dastdemo"
-          severity_threshold: "High"
+          severity_threshold: "Low"
           scan_type: "baseline"
