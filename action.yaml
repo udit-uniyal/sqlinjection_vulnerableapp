@@ -1,0 +1,95 @@
+name: AccuKnox DAST
+description: Run a DAST (full or baseline) and upload the reports to the AccuKnox CSPM panel.
+
+inputs:
+  target_url:
+    description: "The URL of the web application to scan."
+    required: true
+  accuknox_token:
+    description: "Token for authenticating with the AccuKnox CSPM panel."
+    required: true
+  accuknox_endpoint:
+    description: "The URL of the AccuKnox CSPM panel to push the scan results to."
+    required: true
+  tenant_id:
+    description: "The ID of the tenant associated with the CSPM dashboard."
+    required: true
+  label:
+    description: "Label created in AccuKnox SaaS for associating the scan results."
+    required: true
+  severity_threshold:
+    description: "The minimum severity level (e.g., High, Medium, Low, Informational) that will cause the pipeline to fail if present in the report."
+    required: true
+  scan_type:
+    description: "Type of scan to run: 'baseline' or 'full-scan'."
+    required: true
+    default: "full-scan"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set permissions for output directory
+      run: |
+        mkdir -p /tmp/zap
+        chmod a+w /tmp/zap
+        ls -la /tmp/zap
+      shell: bash
+
+    - name: Run DAST
+      run: |
+        if [ "${{ inputs.scan_type }}" == "baseline" ]; then
+          SCAN_COMMAND="zap-baseline.py -t ${{ inputs.target_url }} -J /zap/wrk/report.json -I"
+        else
+          SCAN_COMMAND="zap-full-scan.py -t ${{ inputs.target_url }} -J /zap/wrk/report.json -I"
+        fi
+
+        echo "Running ZAP with command: $SCAN_COMMAND"
+
+        docker run --rm \
+          --network host \
+          -v /tmp/zap:/zap/wrk \
+          -t owasp/zap2docker-stable $SCAN_COMMAND
+      shell: bash
+
+    - name: View Report
+      run: |
+        echo "ZAP report output:"
+        cat /tmp/zap/report.json || echo "No report found."
+      shell: bash
+
+    - name: Upload DAST Report to AccuKnox CSPM Panel
+      run: |
+        response=$(curl --location --request POST "https://${{ inputs.accuknox_endpoint }}/api/v1/artifact/?tenant_id=${{ inputs.tenant_id }}&data_type=ZAP&label_id=${{ inputs.label }}&save_to_s3=true" \
+          --header "Tenant-Id: ${{ inputs.tenant_id }}" \
+          --header "Authorization: Bearer ${{ inputs.accuknox_token }}" \
+          --form "file=@/tmp/zap/report.json")
+
+        echo "Upload Response: $response"
+        if [[ "$response" != *"File received successfully"* ]]; then
+          echo "Error: Failed to push report to CSPM panel"
+          exit 1
+        fi
+      shell: bash
+
+    - name: Check Severity Level in ZAP Report
+      run: |
+        case "${{ inputs.severity_threshold }}" in
+          High)           RISK_CODE=3 ;;
+          Medium)         RISK_CODE=2 ;;
+          Low)            RISK_CODE=1 ;;
+          Informational)  RISK_CODE=0 ;;
+          *)              echo "Invalid severity threshold"; exit 1 ;;
+        esac
+
+        if jq -e --argjson risk_code "$RISK_CODE" \
+             '.site[].alerts[] | select(.riskcode|tonumber >= $risk_code)' /tmp/zap/report.json > /dev/null; then
+          echo "❌ Vulnerabilities with severity ${{ inputs.severity_threshold }} or higher found."
+          exit 1
+        else
+          echo "✅ No vulnerabilities with severity ${{ inputs.severity_threshold }} or higher were found."
+        fi
+      shell: bash
+
+branding:
+  icon: "shield"
+  color: "red"
