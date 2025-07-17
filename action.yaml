@@ -38,24 +38,22 @@ runs:
     - name: Run DAST
       run: |
         if [ "${{ inputs.scan_type }}" == "baseline" ]; then
-          SCAN_COMMAND="zap-baseline.py -t ${{ inputs.target_url }} -J /zap/wrk/report.json -I"
+          SCAN_COMMAND="zap-baseline.py -t ${{ inputs.target_url }} -J report.json -I"
         else
-          SCAN_COMMAND="zap-full-scan.py -t ${{ inputs.target_url }} -J /zap/wrk/report.json -I"
+          SCAN_COMMAND="zap-full-scan.py -t ${{ inputs.target_url }} -J report.json -I"
         fi
-
-        echo "Running ZAP with command: $SCAN_COMMAND"
 
         docker run --rm \
           --network host \
           -v /tmp/zap:/zap/wrk \
-          -t owasp/zap2docker-stable $SCAN_COMMAND
+          -t zaproxy/zap-stable $SCAN_COMMAND
       shell: bash
 
     - name: View Report
       run: |
-        echo "ZAP report output:"
-        cat /tmp/zap/report.json || echo "No report found."
+        cat /tmp/zap/report.json
       shell: bash
+
 
     - name: Upload DAST Report to AccuKnox CSPM Panel
       run: |
@@ -64,7 +62,7 @@ runs:
           --header "Authorization: Bearer ${{ inputs.accuknox_token }}" \
           --form "file=@/tmp/zap/report.json")
 
-        echo "Upload Response: $response"
+        echo "Response: $response"
         if [[ "$response" != *"File received successfully"* ]]; then
           echo "Error: Failed to push report to CSPM panel"
           exit 1
@@ -73,6 +71,7 @@ runs:
 
     - name: Check Severity Level in ZAP Report
       run: |
+        # Map severity threshold to risk code (0=Informational, 1=Low, 2=Medium, 3=High)
         case "${{ inputs.severity_threshold }}" in
           High)           RISK_CODE=3 ;;
           Medium)         RISK_CODE=2 ;;
@@ -81,14 +80,16 @@ runs:
           *)              echo "Invalid severity threshold"; exit 1 ;;
         esac
 
+        # Check if any alerts in the report meet or exceed the threshold risk code
         if jq -e --argjson risk_code "$RISK_CODE" \
              '.site[].alerts[] | select(.riskcode|tonumber >= $risk_code)' /tmp/zap/report.json > /dev/null; then
-          echo "❌ Vulnerabilities with severity ${{ inputs.severity_threshold }} or higher found."
+          echo "Error: Vulnerability with severity ${{ inputs.severity_threshold }} or higher found in ZAP report."
           exit 1
         else
-          echo "✅ No vulnerabilities with severity ${{ inputs.severity_threshold }} or higher were found."
+          echo "No vulnerabilities with severity ${{ inputs.severity_threshold }} or higher were found."
         fi
       shell: bash
+
 
 branding:
   icon: "shield"
