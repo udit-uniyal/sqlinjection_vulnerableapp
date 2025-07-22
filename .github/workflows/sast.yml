@@ -21,7 +21,6 @@ jobs:
           accuknox_tenant: "${{ secrets.AK_TENANT_ID }}"
           accuknox_token: "${{ secrets.AK_TOKEN }}"
           accuknox_label: "SAST"
-          input_soft_fail: "true"
 
 
   dast:
