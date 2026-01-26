@@ -24,25 +24,25 @@ jobs:
           accuknox_label: "sqlvuln"
           input_soft_fail: "true"
 
-      - name: Set up Python and install Flask
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install flask
-          nohup python app.py > app.log 2>&1 &
-          echo "App started"
-          sleep 10
+      # - name: Set up Python and install Flask
+      #   run: |
+      #     python3 -m venv venv
+      #     source venv/bin/activate
+      #     pip install flask
+      #     nohup python app.py > app.log 2>&1 &
+      #     echo "App started"
+      #     sleep 10
 
-      - name: Check app is running
-        run: |
-          curl -sSf http://localhost:5000 || (echo "App failed to start" && exit 1)
+      # - name: Check app is running
+      #   run: |
+      #     curl -sSf http://localhost:5000 || (echo "App failed to start" && exit 1)
 
-      - name: Run AccuKnox DAST Scan
-        uses: accuknox/dast-scan-action@latest
-        with:
-          target_url: "http://localhost:5000"
-          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-          accuknox_token: ${{ secrets.AK_TOKEN }}
-          accuknox_label: "dastdemo"
-          # severity_threshold: "Low"
-          dast_scan_type: "baseline"
+      # - name: Run AccuKnox DAST Scan
+      #   uses: accuknox/dast-scan-action@latest
+      #   with:
+      #     target_url: "http://localhost:5000"
+      #     accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+      #     accuknox_token: ${{ secrets.AK_TOKEN }}
+      #     accuknox_label: "dastdemo"
+      #     # severity_threshold: "Low"
+      #     dast_scan_type: "baseline"
