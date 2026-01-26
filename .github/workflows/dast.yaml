@@ -38,12 +38,11 @@ jobs:
           curl -sSf http://localhost:5000 || (echo "App failed to start" && exit 1)
 
       - name: Run AccuKnox DAST Scan
-        uses: ./
+        uses: accuknox/dast-scan-action@latest
         with:
           target_url: "http://localhost:5000"
           accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-          tenant_id: ${{ secrets.AK_TENANT_ID }}
           accuknox_token: ${{ secrets.AK_TOKEN }}
-          label: "dastdemo"
-          severity_threshold: "Low"
-          scan_type: "baseline"
+          accuknox_label: "dastdemo"
+          # severity_threshold: "Low"
+          dast_scan_type: "baseline"
