@@ -3,7 +3,7 @@ name: AccuKnox DAST Scan
 on:
   push:
     branches:
-      - main
+      - stage
 
 jobs:
   zap-dast:
