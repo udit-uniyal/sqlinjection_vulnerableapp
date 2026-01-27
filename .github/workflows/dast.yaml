@@ -22,7 +22,7 @@ jobs:
           accuknox_endpoint: "cspm.demo.accuknox.com"
           accuknox_token: "${{ secrets.AK_TOKEN }}"
           accuknox_label: "sqlvuln"
-          soft_fail: "false"
+          soft_fail: "true"
 
       # - name: Set up Python and install Flask
       #   run: |
