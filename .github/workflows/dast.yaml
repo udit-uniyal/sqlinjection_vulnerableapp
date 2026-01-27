@@ -23,7 +23,6 @@ jobs:
           accuknox_token: "${{ secrets.AK_TOKEN }}"
           accuknox_label: "sqlvuln"
           soft_fail: "true"
-
       # - name: Set up Python and install Flask
       #   run: |
       #     python3 -m venv venv
