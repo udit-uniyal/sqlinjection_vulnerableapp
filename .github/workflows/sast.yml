@@ -7,8 +7,8 @@ on:
   pull_request:
     branches:
       - main
+  
 
-      
 jobs:
   accuknox-cicd:
     runs-on: ubuntu-latest
@@ -25,3 +25,6 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY}}
           accuknox_ai_analysis: "false"
           soft_fail: "true"
+
+
+          
